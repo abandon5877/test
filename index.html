@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法编程冒险原型</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --panel-bg: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text-main: #ecf0f1;
+            --text-dim: #95a5a6;
+            --gauge-bg: #333;
+            --gauge-fill: #3498db;
+            --cast-bar: #f1c40f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 800px;
+            background: var(--panel-bg);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- 顶部状态栏 --- */
+        header {
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .stat-box { font-size: 14px; }
+        .hp-bar-container, .mp-bar-container {
+            width: 150px;
+            height: 10px;
+            background: var(--gauge-bg);
+            margin-top: 5px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .hp-fill { height: 100%; background: #e74c3c; width: 100%; transition: width 0.3s; }
+        .mp-fill { height: 100%; background: #3498db; width: 100%; transition: width 0.3s; }
+
+        /* --- 主场景区域 --- */
+        #scene-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, #2a2a4a 0%, #1a1a2e 100%);
+            overflow: hidden;
+        }
+
+        .battle-field {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .unit {
+            text-align: center;
+            position: relative;
+            width: 100px;
+        }
+
+        .unit-avatar {
+            width: 80px;
+            height: 80px;
+            background: #444;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 3px solid #666;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .unit.ready .unit-avatar {
+            border-color: var(--highlight);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px var(--highlight);
+            animation: pulse 1s infinite;
+        }
+
+        .unit.casting .unit-avatar {
+            border-color: var(--cast-bar);
+        }
+
+        .unit.stunned .unit-avatar {
+            filter: grayscale(100%);
+            opacity: 0.6;
+        }
+
+        /* ATB 行动条 */
+        .atb-container {
+            width: 100%;
+            height: 6px;
+            background: var(--gauge-bg);
+            border-radius: 3px;
+            margin-top: 5px;
+            position: relative;
+        }
+        .atb-fill {
+            height: 100%;
+            background: var(--gauge-fill);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* 吟唱条 (覆盖在 ATB 上或独立) */
+        .cast-container {
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            margin-top: 2px;
+            display: none; /* 默认隐藏 */
+        }
+        .unit.casting .cast-container { display: block; }
+        .cast-fill {
+            height: 100%;
+            background: var(--cast-bar);
+            width: 0%;
+        }
+
+        /* 战斗日志 */
+        #combat-log {
+            width: 90%;
+            height: 100px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #444;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 12px;
+            font-family: monospace;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .log-entry { margin-bottom: 4px; }
+        .log-player { color: #81ecec; }
+        .log-enemy { color: #ff7675; }
+        .log-system { color: #ffeaa7; }
+        .log-error { color: #fd79a8; font-weight: bold; }
+
+        /* --- 底部控制区 --- */
+        #control-panel {
+            height: 220px;
+            background: #0f1526;
+            border-top: 2px solid var(--accent);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 营地编辑器样式 */
+        .spell-slots {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        .slot {
+            width: 140px;
+            height: 60px;
+            background: #222;
+            border: 2px dashed #555;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .slot.filled {
+            border-style: solid;
+            border-color: var(--accent);
+            background: #1a253a;
+        }
+        .slot-info {
+            font-size: 12px;
+            text-align: center;
+            width: 100%;
+            padding: 0 5px;
+        }
+        .slot-remove {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            display: none;
+        }
+        .slot:hover .slot-remove { display: flex; }
+
+        .rune-library {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+        .rune-item {
+            min-width: 80px;
+            height: 80px;
+            background: #2c3e50;
+            border: 1px solid #444;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+            transition: transform 0.1s;
+        }
+        .rune-item:hover { transform: translateY(-3px); background: #34495e; }
+        .rune-icon { font-size: 24px; margin-bottom: 5px; }
+        .rune-type { font-size: 10px; color: #aaa; }
+
+        /* 战斗操作区 */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            height: 100%;
+        }
+        .spell-btn {
+            flex: 1;
+            max-width: 150px;
+            background: linear-gradient(145deg, #2c3e50, #1a253a);
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .spell-btn:hover:not(:disabled) {
+            background: linear-gradient(145deg, #34495e, #2c3e50);
+            border-color: var(--gauge-fill);
+        }
+        .spell-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+        .spell-btn .cost {
+            font-size: 10px;
+            color: #3498db;
+            margin-top: 4px;
+        }
+        .spell-btn .time {
+            font-size: 10px;
+            color: #f1c40f;
+        }
+
+        /* 全局按钮 */
+        .btn-primary {
+            background: var(--highlight);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        /* 动画 */
+        @keyframes pulse {
+            0% { transform: scale(1.1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1.1); }
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.3s; }
+
+        /* 场景切换遮罩 */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            display: none;
+        }
+        #overlay.active { display: flex; }
+        .overlay-content {
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header>
+        <div class="stat-box">
+            <div>HP <span id="player-hp-text">100/100</span></div>
+            <div class="hp-bar-container"><div id="player-hp-bar" class="hp-fill"></div></div>
+        </div>
+        <div style="font-weight:bold; color:var(--highlight);" id="scene-title">野外遭遇</div>
+        <div class="stat-box" style="text-align:right;">
+            <div>MP <span id="player-mp-text">50/50</span></div>
+            <div class="mp-bar-container"><div id="player-mp-bar" class="mp-fill"></div></div>
+        </div>
+    </header>
+
+    <div id="scene-area">
+        <!-- 战斗场景 -->
+        <div class="battle-field" id="battle-field" style="display:none;">
+            <!-- 玩家 -->
+            <div class="unit" id="unit-player">
+                <div class="unit-avatar">🧙‍♂️</div>
+                <div class="atb-container"><div class="atb-fill" id="player-atb"></div></div>
+                <div class="cast-container"><div class="cast-fill" id="player-cast"></div></div>
+                <div style="font-size:12px; margin-top:5px;">法师</div>
+            </div>
+            <!-- 敌人 -->
+            <div class="unit" id="unit-enemy">
+                <div class="unit-avatar">🐺</div>
+                <div class="atb-container"><div class="atb-fill" id="enemy-atb"></div></div>
+                <div style="font-size:12px; margin-top:5px;" id="enemy-name">恶狼</div>
+                <div style="font-size:10px; color:#aaa;" id="enemy-hp-text">HP: 80</div>
+            </div>
+        </div>
+
+        <!-- 营地场景 (简单示意) -->
+        <div id="camp-scene" style="display:none; text-align:center;">
+            <h2>🏕️ 安全营地</h2>
+            <p>在此调整你的法术组合</p>
+            <div style="font-size:40px; margin:20px;">⛺</div>
+        </div>
+
+        <div id="combat-log"></div>
+    </div>
+
+    <div id="control-panel">
+        <!-- 营地编辑界面 -->
+        <div id="camp-editor" style="display:none; height:100%;">
+            <div class="panel-title">法术卡槽 (点击符文添加，点击槽位移除)</div>
+            <div class="spell-slots" id="spell-slots-container">
+                <!-- 由 JS 生成 -->
+            </div>
+            
+            <div class="panel-title">符文库</div>
+            <div class="rune-library" id="rune-library">
+                <!-- 由 JS 生成 -->
+            </div>
+            
+            <div style="margin-top:20px; text-align:center;">
+                <button class="btn-primary" onclick="game.leaveCamp()">离开营地 (保存并出发)</button>
+            </div>
+        </div>
+
+        <!-- 战斗操作界面 -->
+        <div id="battle-controls" style="height:100%;">
+            <div class="panel-title">可用法术 (行动条满时点击)</div>
+            <div class="action-buttons" id="action-buttons">
+                <!-- 由 JS 生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 覆盖层 (胜利/失败/菜单) -->
+    <div id="overlay">
+        <div class="overlay-content">
+            <h2 id="overlay-title">战斗胜利!</h2>
+            <p id="overlay-msg">获得了经验值。</p>
+            <button class="btn-primary" onclick="game.handleOverlayAction()">继续</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * 数据定义
+ */
+const RUNES = {
+    // 核心符
+    'firebolt': { id: 'firebolt', name: '火球术', type: 'CORE', icon: '🔥', baseDmg: 25, cost: 10, time: 1.5, desc: '基础火焰伤害' },
+    'ice shard': { id: 'ice shard', name: '冰锥术', type: 'CORE', icon: '❄️', baseDmg: 20, cost: 12, time: 1.2, desc: '较低伤害，较快' },
+    'heal': { id: 'heal', name: '治疗术', type: 'CORE', icon: '💚', baseHeal: 30, cost: 15, time: 2.0, desc: '恢复生命值' },
+    
+    // 修饰符
+    'amp': { id: 'amp', name: '强化', type: 'MOD', icon: '⚡', dmgMult: 1.5, costMult: 1.3, timeAdd: 0.5, desc: '伤害+50%, 耗蓝+30%' },
+    'quick': { id: 'quick', name: '迅捷', type: 'MOD', icon: '💨', dmgMult: 0.8, costMult: 0.8, timeMult: 0.6, desc: '伤害-20%, 时间-40%' },
+    'double': { id: 'double', name: '双重', type: 'MOD', icon: '🔁', count: 2, costMult: 1.8, timeMult: 1.6, desc: '释放两次' }
+};
+
+const ENEMIES = {
+    'wolf': { name: '恶狼', hp: 60, maxHp: 60, dmg: 8, speed: 15, icon: '🐺' },
+    'goblin': { name: '哥布林', hp: 40, maxHp: 40, dmg: 6, speed: 20, icon: '👺' },
+    'ogre': { name: '食人魔', hp: 120, maxHp: 120, dmg: 15, speed: 8, icon: '👹' }
+};
+
+/**
+ * 游戏状态
+ */
+const state = {
+    scene: 'camp', // 'camp', 'battle'
+    player: {
+        hp: 100, maxHp: 100,
+        mp: 50, maxMp: 50,
+        speed: 12,
+        spells: [ // 预设三个卡槽
+            ['firebolt'], 
+            ['amp', 'firebolt'], 
+            ['heal']
+        ]
+    },
+    enemy: null,
+    battle: {
+        active: false,
+        lastTime: 0,
+        playerAtb: 0,
+        enemyAtb: 0,
+        playerStatus: 'charging', // charging, ready, casting, stunned
+        enemyStatus: 'charging',
+        castProgress: 0,
+        currentSpellIndex: -1,
+        interruptThreshold: 10 // 受到多少伤害会打断施法
+    }
+};
+
+/**
+ * 核心逻辑引擎
+ */
+const engine = {
+    // 计算一个法术链的属性
+    calculateSpell: (chain) => {
+        if (!chain || chain.length === 0) return null;
+
+        let totalCost = 0;
+        let totalTime = 0;
+        let totalDmg = 0;
+        let totalHeal = 0;
+        let isDamage = false;
+        let isHeal = false;
+        let nameParts = [];
+
+        // 简单解析：从左到右，修饰符作用于紧随其后的核心符
+        // 为了原型简化，我们假设：修饰符必须放在核心符前面才有效，或者我们遍历处理
+        
+        // 更简单的逻辑：找到核心符，应用前面的修饰符
+        // 这里采用累加逻辑：遇到修饰符暂存，遇到核心符结算
+        
+        let pendingMods = [];
+
+        for (let runeId of chain) {
+            const rune = RUNES[runeId];
+            if (!rune) continue;
+
+            if (rune.type === 'MOD') {
+                pendingMods.push(rune);
+            } else if (rune.type === 'CORE') {
+                // 应用所有暂存的修饰符到这个核心符
+                let cDmg = rune.baseDmg || 0;
+                let cHeal = rune.baseHeal || 0;
+                let cCost = rune.cost;
+                let cTime = rune.time;
+                let count = 1;
+
+                // 应用修饰符 (从后往前应用，或者按顺序，这里简单处理为乘法叠加)
+                for (let mod of pendingMods) {
+                    if (mod.dmgMult) cDmg *= mod.dmgMult;
+                    if (mod.costMult) cCost *= mod.costMult;
+                    if (mod.timeMult) cTime *= mod.timeMult;
+                    if (mod.timeAdd) cTime += mod.timeAdd;
+                    if (mod.count) count = mod.count; // 简单起见，最后一个多重符生效
+                }
+
+                // 累加
+                totalCost += cCost * count;
+                totalTime += cTime * count;
+                if (cDmg > 0) {
+                    totalDmg += cDmg * count;
+                    isDamage = true;
+                }
+                if (cHeal > 0) {
+                    totalHeal += cHeal * count;
+                    isHeal = true;
+                }
+
+                nameParts.push(rune.name);
+                pendingMods = []; // 重置
+            }
+        }
+
+        // 构建名称
+        let fullName = chain.map(id => RUNES[id]?.name).join('+');
+        if (fullName === '') fullName = '无效法术';
+
+        return {
+            name: fullName,
+            cost: Math.floor(totalCost),
+            time: parseFloat(totalTime.toFixed(1)),
+            damage: Math.floor(totalDmg),
+            heal: Math.floor(totalHeal),
+            type: isHeal ? 'heal' : 'dmg'
+        };
+    },
+
+    // 战斗循环
+    updateBattle: (timestamp) => {
+        if (!state.battle.active) return;
+        if (state.scene !== 'battle') return;
+
+        const dt = (timestamp - state.battle.lastTime) / 1000; // 秒
+        state.battle.lastTime = timestamp;
+
+        const b = state.battle;
+        const p = state.player;
+        const e = state.enemy;
+
+        // 1. 更新玩家 ATB
+        if (b.playerStatus === 'charging') {
+            b.playerAtb += p.speed * dt * 5; // 速度系数
+            if (b.playerAtb >= 100) {
+                b.playerAtb = 100;
+                b.playerStatus = 'ready';
+                ui.log("系统", "你的回合就绪！");
+                ui.updateUnitVisuals();
+                ui.enableButtons(true);
+            }
+        } else if (b.playerStatus === 'casting') {
+            // 吟唱中，ATB 暂停增长，但时间在走
+            b.castProgress += (100 / b.currentSpellTime) * dt;
+            if (b.castProgress >= 100) {
+                engine.executePlayerSpell();
+            }
+        } else if (b.playerStatus === 'stunned') {
+            // 硬直时间模拟
+            b.stunTimer -= dt;
+            if (b.stunTimer <= 0) {
+                b.playerStatus = 'charging';
+                b.playerAtb = 0;
+                ui.updateUnitVisuals();
+            }
+        }
+
+        // 2. 更新敌人 ATB
+        if (b.enemyStatus === 'charging') {
+            b.enemyAtb += e.speed * dt * 5;
+            if (b.enemyAtb >= 100) {
+                b.enemyAtb = 100;
+                b.enemyStatus = 'ready';
+                ui.updateUnitVisuals();
+                
+                // 敌人 AI: 如果就绪，稍微延迟一点然后攻击
+                setTimeout(() => {
+                    if (state.scene === 'battle' && b.enemyStatus === 'ready') {
+                        engine.enemyAttack();
+                    }
+                }, 500);
+            }
+        }
+
+        ui.renderBattleFrame();
+        requestAnimationFrame(engine.updateBattle);
+    },
+
+    executePlayerSpell: () => {
+        const b = state.battle;
+        const spell = b.currentSpellData;
+        
+        b.playerStatus = 'charging';
+        b.castProgress = 0;
+        b.currentSpellIndex = -1;
+        b.currentSpellData = null;
+        b.currentSpellTime = 0;
+
+        // 扣蓝
+        state.player.mp -= spell.cost;
+        ui.updateStats();
+
+        // 生效
+        if (spell.type === 'dmg') {
+            // 暴击逻辑简单化
+            const isCrit = Math.random() < 0.1;
+            let dmg = spell.damage * (isCrit ? 1.5 : 1);
+            state.enemy.hp -= dmg;
+            ui.log("玩家", `施放 ${spell.name}! 造成 ${dmg} 点伤害${isCrit?' (暴击!)':''}`);
+            document.getElementById('unit-enemy').classList.add('shake');
+            setTimeout(()=>document.getElementById('unit-enemy').classList.remove('shake'), 300);
+        } else if (spell.type === 'heal') {
+            state.player.hp = Math.min(state.player.maxHp, state.player.hp + spell.heal);
+            ui.log("玩家", `施放 ${spell.name}! 恢复 ${spell.heal} HP`);
+        }
+
+        ui.updateStats();
+        ui.checkWinCondition();
+        ui.enableButtons(false);
+        ui.updateUnitVisuals();
+    },
+
+    enemyAttack: () => {
+        const b = state.battle;
+        const e = state.enemy;
+        
+        // 检查是否打断玩家
+        if (b.playerStatus === 'casting') {
+            // 简单判定：只要攻击就打断 (或者加个概率)
+            ui.log("敌人", `${e.name} 攻击了你！(打断施法!)`, 'error');
+            b.playerStatus = 'stunned';
+            b.stunTimer = 1.5; // 硬直 1.5 秒
+            b.castProgress = 0;
+            // 惩罚：扣除一半当前法术蓝耗 (已扣了，这里再扣点或者单纯浪费)
+            state.player.mp = Math.max(0, state.player.mp - Math.floor(b.currentSpellData.cost / 2));
+            ui.updateStats();
+            document.getElementById('unit-player').classList.add('shake');
+            setTimeout(()=>document.getElementById('unit-player').classList.remove('shake'), 300);
+        } else {
+            // 正常伤害
+            const dmg = e.dmg + Math.floor(Math.random() * 3);
+            state.player.hp -= dmg;
+            ui.log("敌人", `${e.name} 攻击了你！造成 ${dmg} 伤害`, 'enemy');
+            document.getElementById('unit-player').classList.add('shake');
+            setTimeout(()=>document.getElementById('unit-player').classList.remove('shake'), 300);
+            ui.updateStats();
+            if (state.player.hp <= 0) {
+                game.gameOver();
+                return;
+            }
+        }
+
+        b.enemyStatus = 'charging';
+        b.enemyAtb = 0;
+        ui.updateUnitVisuals();
+    },
+
+    startBattle: (enemyKey) => {
+        state.scene = 'battle';
+        state.enemy = JSON.parse(JSON.stringify(ENEMIES[enemyKey])); // 克隆
+        state.battle = {
+            active: true,
+            lastTime: performance.now(),
+            playerAtb: 0,
+            enemyAtb: 0,
+            playerStatus: 'charging',
+            enemyStatus: 'charging',
+            castProgress: 0,
+            currentSpellIndex: -1,
+            currentSpellData: null,
+            currentSpellTime: 0,
+            stunTimer: 0
+        };
+        
+        state.player.mp = Math.min(state.player.maxMp, state.player.mp + 20); // 战斗回点蓝
+
+        ui.switchScene('battle');
+        ui.initBattleUI();
+        ui.log("系统", `遭遇了 ${state.enemy.name}!`, 'system');
+        
+        requestAnimationFrame(engine.updateBattle);
+    }
+};
+
+/**
+ * UI 管理
+ */
+const ui = {
+    log: (source, msg, type='normal') => {
+        const logEl = document.getElementById('combat-log');
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.innerText = `[${source}] ${msg}`;
+        logEl.appendChild(entry);
+        logEl.scrollTop = logEl.scrollHeight;
+    },
+
+    updateStats: () => {
+        const p = state.player;
+        document.getElementById('player-hp-text').innerText = `${p.hp}/${p.maxHp}`;
+        document.getElementById('player-hp-bar').style.width = `${(p.hp/p.maxHp)*100}%`;
+        document.getElementById('player-mp-text').innerText = `${p.mp}/${p.maxMp}`;
+        document.getElementById('player-mp-bar').style.width = `${(p.mp/p.maxMp)*100}%`;
+    },
+
+    switchScene: (sceneName) => {
+        document.getElementById('battle-field').style.display = sceneName === 'battle' ? 'flex' : 'none';
+        document.getElementById('camp-scene').style.display = sceneName === 'camp' ? 'block' : 'none';
+        document.getElementById('camp-editor').style.display = sceneName === 'camp' ? 'block' : 'none';
+        document.getElementById('battle-controls').style.display = sceneName === 'battle' ? 'block' : 'none';
+        document.getElementById('scene-title').innerText = sceneName === 'camp' ? '安全营地' : '战斗中';
+        
+        if (sceneName === 'camp') {
+            this.renderCampEditor();
+        }
+    },
+
+    renderCampEditor: () => {
+        const container = document.getElementById('spell-slots-container');
+        container.innerHTML = '';
+        
+        state.player.spells.forEach((chain, index) => {
+            const slot = document.createElement('div');
+            const stats = engine.calculateSpell(chain);
+            slot.className = `slot ${chain.length > 0 ? 'filled' : ''}`;
+            slot.onclick = () => {
+                // 点击清空该槽位
+                if(confirm('清空这个法术槽？')) {
+                    state.player.spells[index] = [];
+                    this.renderCampEditor();
+                }
+            };
+
+            let content = '';
+            if (chain.length === 0) {
+                content = `<span style="color:#666">空槽位</span>`;
+            } else {
+                content = `
+                    <div class="slot-info">
+                        <div style="font-weight:bold; color:#fff">${stats.name}</div>
+                        <div style="color:#f1c40f">⏱️ ${stats.time}s</div>
+                        <div style="color:#3498db">💧 ${stats.cost} MP</div>
+                        <div style="color:#e74c3c">⚔️ ${stats.damage || stats.heal}</div>
+                    </div>
+                    <div class="slot-remove">×</div>
+                `;
+            }
+            slot.innerHTML = content;
+            container.appendChild(slot);
+        });
+
+        // 渲染库
+        const lib = document.getElementById('rune-library');
+        lib.innerHTML = '';
+        Object.values(RUNES).forEach(rune => {
+            const item = document.createElement('div');
+            item.className = 'rune-item';
+            item.innerHTML = `
+                <div class="rune-icon">${rune.icon}</div>
+                <div>${rune.name}</div>
+                <div class="rune-type">${rune.type}</div>
+            `;
+            item.onclick = () => this.addRuneToFirstEmptySlot(rune.id);
+            lib.appendChild(item);
+        });
+    },
+
+    addRuneToFirstEmptySlot: (runeId) => {
+        // 简单逻辑：添加到第一个非满的槽位，或者追加到最后一个选中的槽位？
+        // 原型简化：总是添加到第一个槽位作为演示，或者让用户手动改？
+        // 改进：添加到第一个槽位，如果满了提示
+        if (state.player.spells.length >= 4) {
+            alert("第一个槽位已满！(原型限制)");
+            return;
+        }
+        state.player.spells.push(runeId);
+        this.renderCampEditor();
+    },
+
+    initBattleUI: () => {
+        document.getElementById('enemy-name').innerText = state.enemy.name;
+        document.getElementById('unit-enemy').querySelector('.unit-avatar').innerText = state.enemy.icon;
+        this.updateEnemyHp();
+        this.renderBattleButtons();
+        this.updateUnitVisuals();
+    },
+
+    updateEnemyHp: () => {
+        const pct = (state.enemy.hp / state.enemy.maxHp) * 100;
+        document.getElementById('enemy-hp-text').innerText = `HP: ${Math.max(0, state.enemy.hp)}/${state.enemy.maxHp}`;
+        // 简单变色
+        const avatar = document.getElementById('unit-enemy').querySelector('.unit-avatar');
+        if (pct < 30) avatar.style.borderColor = 'red';
+        else avatar.style.borderColor = '#666';
+    },
+
+    renderBattleButtons: () => {
+        const container = document.getElementById('action-buttons');
+        container.innerHTML = '';
+        
+        state.player.spells.forEach((chain, index) => {
+            const stats = engine.calculateSpell(chain);
+            if (!stats) return;
+
+            const btn = document.createElement('button');
+            btn.className = 'spell-btn';
+            btn.disabled = true; // 默认禁用，ATB 满了才启用
+            btn.id = `spell-btn-${index}`;
+            btn.innerHTML = `
+                <div style="font-size:20px">${chain.map(id=>RUNES[id].icon).join('')}</div>
+                <div style="font-weight:bold; margin:5px 0">${stats.name}</div>
+                <div class="time">⏱️ ${stats.time}s</div>
+                <div class="cost">💧 ${stats.cost}</div>
+            `;
+            btn.onclick = () => game.castSpell(index);
+            container.appendChild(btn);
+        });
+    },
+
+    enableButtons: (enabled) => {
+        const btns = document.querySelectorAll('.spell-btn');
+        btns.forEach((btn, idx) => {
+            const chain = state.player.spells[idx];
+            const stats = engine.calculateSpell(chain);
+            // 额外检查蓝量
+            if (enabled && state.player.mp >= stats.cost) {
+                btn.disabled = false;
+                btn.style.opacity = 1;
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = 0.5;
+            }
+        });
+    },
+
+    updateUnitVisuals: () => {
+        const pUnit = document.getElementById('unit-player');
+        const eUnit = document.getElementById('unit-enemy');
+        
+        pUnit.classList.remove('ready', 'casting', 'stunned');
+        eUnit.classList.remove('ready', 'casting', 'stunned');
+
+        if (state.battle.playerStatus === 'ready') pUnit.classList.add('ready');
+        if (state.battle.playerStatus === 'casting') pUnit.classList.add('casting');
+        if (state.battle.playerStatus === 'stunned') pUnit.classList.add('stunned');
+
+        if (state.battle.enemyStatus === 'ready') eUnit.classList.add('ready');
+    },
+
+    renderBattleFrame: () => {
+        document.getElementById('player-atb').style.width = `${state.battle.playerAtb}%`;
+        document.getElementById('enemy-atb').style.width = `${state.battle.enemyAtb}%`;
+        
+        if (state.battle.playerStatus === 'casting') {
+            document.getElementById('player-cast').style.width = `${state.battle.castProgress}%`;
+        } else {
+            document.getElementById('player-cast').style.width = '0%';
+        }
+        
+        this.updateEnemyHp();
+    },
+
+    checkWinCondition: () => {
+        if (state.enemy.hp <= 0) {
+            state.battle.active = false;
+            game.victory();
+        }
+    }
+};
+
+/**
+ * 游戏控制器
+ */
+const game = {
+    leaveCamp: () => {
+        // 随机遇敌
+        const keys = Object.keys(ENEMIES);
+        const randomEnemy = keys[Math.floor(Math.random() * keys.length)];
+        engine.startBattle(randomEnemy);
+    },
+
+    castSpell: (index) => {
+        const chain = state.player.spells[index];
+        const stats = engine.calculateSpell(chain);
+        
+        if (state.player.mp < stats.cost) {
+            ui.log("系统", "法力不足!", "error");
+            return;
+        }
+
+        const b = state.battle;
+        b.playerStatus = 'casting';
+        b.currentSpellIndex = index;
+        b.currentSpellData = stats;
+        b.currentSpellTime = stats.time;
+        b.castProgress = 0;
+        
+        ui.log("玩家", `开始吟唱：${stats.name}... (${stats.time}s)`);
+        ui.enableButtons(false);
+        ui.updateUnitVisuals();
+    },
+
+    victory: () => {
+        document.getElementById('overlay-title').innerText = "战斗胜利!";
+        document.getElementById('overlay-msg').innerText = `击败了 ${state.enemy.name}，恢复了部分法力。`;
+        document.getElementById('overlay').classList.add('active');
+        this.nextAction = 'camp';
+    },
+
+    gameOver: () => {
+        document.getElementById('overlay-title').innerText = "你失败了...";
+        document.getElementById('overlay-msg').innerText = "被击倒在荒野中。";
+        document.getElementById('overlay').classList.add('active');
+        this.nextAction = 'restart';
+    },
+
+    handleOverlayAction: () => {
+        document.getElementById('overlay').classList.remove('active');
+        if (this.nextAction === 'camp') {
+            // 回营回血
+            state.player.hp = state.player.maxHp;
+            state.player.mp = state.player.maxMp;
+            ui.updateStats();
+            ui.switchScene('camp');
+            ui.log("系统", "回到了营地，状态已恢复。");
+        } else if (this.nextAction === 'restart') {
+            location.reload();
+        }
+    }
+};
+
+// 初始化
+window.onload = () => {
+    ui.switchScene('camp');
+    ui.updateStats();
+    ui.log("系统", "欢迎来到魔法编程原型。在营地配置法术，然后出发战斗！");
+};
+
+</script>
+</body>
+</html>
