@@ -1,0 +1,513 @@
+:root {
+  --bg-color: #1a1a2e;
+  --panel-bg: #16213e;
+  --accent: #0f3460;
+  --highlight: #e94560;
+  --text-main: #ecf0f1;
+  --text-dim: #95a5a6;
+  --gauge-bg: #333;
+  --gauge-fill: #3498db;
+  --gauge-hp: #e74c3c;
+  --gauge-mp: #3498db;
+  --cast-bar: #f1c40f;
+  --atb-player: #3498db;
+  --atb-enemy: #e74c3c;
+  --border: #34495e;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--panel-bg);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* 状态栏 */
+.status-bar {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--accent);
+}
+
+.scene-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--highlight);
+}
+
+.player-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat .label {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.gauge {
+  width: 100px;
+  height: 10px;
+  background: var(--gauge-bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.gauge-fill.hp {
+  background: var(--gauge-hp);
+}
+
+.gauge-fill.mp {
+  background: var(--gauge-mp);
+}
+
+.stat .value {
+  font-size: 0.9rem;
+  min-width: 50px;
+}
+
+/* 场景内容 */
+.scene-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.scene {
+  display: none;
+}
+
+.scene.active {
+  display: block;
+}
+
+.scene h2 {
+  margin-bottom: 1rem;
+  color: var(--highlight);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+/* 符文库 */
+.rune-library {
+  margin-bottom: 1.5rem;
+}
+
+.rune-library h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.rune-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.rune-item {
+  background: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rune-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.rune-item .icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.rune-item .name {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.rune-item .type {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* 法术卡槽 */
+.spell-slots {
+  margin-bottom: 1.5rem;
+}
+
+.spell-slots h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.spell-slot {
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 100px;
+  position: relative;
+}
+
+.spell-slot.active {
+  border-color: var(--highlight);
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.slot-number {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.slot-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+}
+
+.slot-rune {
+  background: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.slot-rune .icon {
+  font-size: 1rem;
+}
+
+.remove-rune {
+  background: var(--highlight);
+  border: none;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.25rem;
+}
+
+/* 预览 */
+.preview {
+  margin-bottom: 1.5rem;
+}
+
+.preview h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.preview-content {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.preview-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.preview-label {
+  color: var(--text-dim);
+}
+
+.preview-value {
+  font-weight: bold;
+}
+
+/* 战斗场景 */
+.battle-arena {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.enemy-info {
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.enemy-info .name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.enemy-info .icon {
+  font-size: 3rem;
+  margin: 0.5rem 0;
+}
+
+.enemy-info .hp {
+  margin-top: 0.5rem;
+}
+
+.battle-status {
+  margin-bottom: 1rem;
+}
+
+.atb-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.atb-bar .atb-fill {
+  flex: 1;
+  height: 15px;
+  background: var(--gauge-bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.atb-bar .atb-fill::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 0;
+  transition: width 0.1s ease;
+}
+
+.atb-bar.player .atb-fill::after {
+  background: var(--atb-player);
+}
+
+.atb-bar.enemy .atb-fill::after {
+  background: var(--atb-enemy);
+}
+
+.cast-bar {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  background: rgba(241, 196, 15, 0.1);
+  border-radius: 8px;
+}
+
+.cast-bar.active {
+  display: flex;
+}
+
+.cast-fill {
+  flex: 1;
+  height: 10px;
+  background: var(--gauge-bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.cast-fill::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--cast-bar);
+  transition: width 0.1s ease;
+}
+
+.player-spells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.spell-button {
+  background: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.spell-button:hover {
+  background: var(--highlight);
+  transform: translateY(-1px);
+}
+
+.spell-button:disabled {
+  background: var(--gauge-bg);
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+/* 战斗日志 */
+.battle-log {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.log-entry.player {
+  color: var(--atb-player);
+}
+
+.log-entry.enemy {
+  color: var(--atb-enemy);
+}
+
+.log-entry.system {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* 控制按钮 */
+.controls {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 2px solid var(--accent);
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+button {
+  background: var(--highlight);
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .status-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .player-stats {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rune-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .slot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .battle-arena {
+    padding: 0.5rem;
+  }
+
+  .controls {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--highlight);
+}
