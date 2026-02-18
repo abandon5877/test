@@ -142,13 +142,14 @@ export function createFullscreenButton(): void {
     try {
       await Fullscreen.toggle();
       
-      // 更新按钮文本
+      // 进入全屏后隐藏按钮
       if (Fullscreen.isFullscreen()) {
-        button.innerHTML = '🔲 退出全屏';
-        console.log('成功进入全屏模式');
+        console.log('成功进入全屏模式，隐藏按钮');
+        button.style.display = 'none';
       } else {
+        console.log('成功退出全屏模式，显示按钮');
         button.innerHTML = '🔲 全屏';
-        console.log('成功退出全屏模式');
+        button.style.display = 'block';
       }
     } catch (error) {
       console.error('全屏操作失败:', error);
@@ -234,7 +235,14 @@ function handleFullscreenChange() {
   // 更新全屏按钮状态
   const button = document.getElementById('fullscreen-button');
   if (button) {
-    button.innerHTML = Fullscreen.isFullscreen() ? '🔲 退出全屏' : '🔲 全屏';
+    if (Fullscreen.isFullscreen()) {
+      // 进入全屏后隐藏按钮
+      button.style.display = 'none';
+    } else {
+      // 退出全屏后显示按钮
+      button.innerHTML = '🔲 全屏';
+      button.style.display = 'block';
+    }
   }
 }
 
