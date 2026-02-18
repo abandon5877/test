@@ -2,7 +2,7 @@
   "name": "魔法编程冒险",
   "short_name": "魔法冒险",
   "description": "一个基于符文组合的魔法编程冒险游戏",
-  "start_url": "/",
+  "start_url": "/test/",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#6b46c1",
