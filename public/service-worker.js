@@ -1,22 +1,22 @@
 // service-worker.js
 const CACHE_NAME = 'magic-adventure-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/vite.svg',
-  '/src/main.ts',
-  '/src/modules/engine.ts',
-  '/src/modules/ui.ts',
-  '/src/modules/atb.ts',
-  '/src/modules/ai.ts',
-  '/src/modules/calculator.ts',
-  '/src/modules/storage.ts',
-  '/src/modules/events.ts',
-  '/src/modules/battle/battleSystem.ts',
-  '/src/utils/helpers.ts',
-  '/src/types/index.ts',
-  '/src/assets/images/0.png'
+  '/test/',
+  '/test/index.html',
+  '/test/manifest.json',
+  '/test/vite.svg',
+  '/test/src/main.ts',
+  '/test/src/modules/engine.ts',
+  '/test/src/modules/ui.ts',
+  '/test/src/modules/atb.ts',
+  '/test/src/modules/ai.ts',
+  '/test/src/modules/calculator.ts',
+  '/test/src/modules/storage.ts',
+  '/test/src/modules/events.ts',
+  '/test/src/modules/battle/battleSystem.ts',
+  '/test/src/utils/helpers.ts',
+  '/test/src/types/index.ts',
+  '/test/src/assets/images/0.png'
 ];
 
 // 安装Service Worker
