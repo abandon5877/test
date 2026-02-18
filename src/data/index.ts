@@ -1,4 +1,4 @@
-import { Rune, Enemy } from '../types';
+import { Rune, Enemy, Material } from '../types';
 
 // 符文数据
 export const RUNES: Record<string, Rune> = {
@@ -10,7 +10,7 @@ export const RUNES: Record<string, Rune> = {
     icon: '🔥',
     baseDmg: 25,
     cost: 10,
-    time: 1.5,
+    time: 0.8,
     desc: '基础火焰伤害'
   },
   iceShard: {
@@ -20,7 +20,7 @@ export const RUNES: Record<string, Rune> = {
     icon: '❄️',
     baseDmg: 20,
     cost: 12,
-    time: 1.2,
+    time: 0.6,
     desc: '较低伤害，较快'
   },
   heal: {
@@ -30,7 +30,7 @@ export const RUNES: Record<string, Rune> = {
     icon: '💚',
     baseHeal: 30,
     cost: 15,
-    time: 2.0,
+    time: 1.0,
     desc: '恢复生命值'
   },
   
@@ -73,6 +73,45 @@ export const RUNES: Record<string, Rune> = {
   }
 };
 
+// 素材数据
+export const MATERIALS: Record<string, Material> = {
+  wolfFang: {
+    id: 'wolfFang',
+    name: '狼牙',
+    icon: '🟨',
+    value: 10,
+    dropRate: 0.3
+  },
+  goblinEar: {
+    id: 'goblinEar',
+    name: '哥布林耳朵',
+    icon: '🟢',
+    value: 8,
+    dropRate: 0.4
+  },
+  ogreTooth: {
+    id: 'ogreTooth',
+    name: '食人魔牙齿',
+    icon: '🔴',
+    value: 20,
+    dropRate: 0.2
+  },
+  fireEssence: {
+    id: 'fireEssence',
+    name: '火焰精华',
+    icon: '🔥',
+    value: 15,
+    dropRate: 0.25
+  },
+  iceEssence: {
+    id: 'iceEssence',
+    name: '冰霜精华',
+    icon: '❄️',
+    value: 15,
+    dropRate: 0.25
+  }
+};
+
 // 敌人数据
 export const ENEMIES: Record<string, Enemy> = {
   wolf: {
@@ -81,8 +120,11 @@ export const ENEMIES: Record<string, Enemy> = {
     hp: 60,
     maxHp: 60,
     dmg: 8,
-    speed: 15,
-    icon: '🐺'
+    speed: 8,
+    icon: '🐺',
+    drops: ['wolfFang', 'fireEssence'],
+    gold: 15,
+    experience: 20
   },
   goblin: {
     id: 'goblin',
@@ -90,8 +132,11 @@ export const ENEMIES: Record<string, Enemy> = {
     hp: 40,
     maxHp: 40,
     dmg: 6,
-    speed: 20,
-    icon: '👺'
+    speed: 10,
+    icon: '👺',
+    drops: ['goblinEar', 'iceEssence'],
+    gold: 10,
+    experience: 15
   },
   ogre: {
     id: 'ogre',
@@ -99,8 +144,11 @@ export const ENEMIES: Record<string, Enemy> = {
     hp: 120,
     maxHp: 120,
     dmg: 15,
-    speed: 8,
-    icon: '👹'
+    speed: 5,
+    icon: '👹',
+    drops: ['ogreTooth', 'fireEssence', 'iceEssence'],
+    gold: 30,
+    experience: 40
   }
 };
 

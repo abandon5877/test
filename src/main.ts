@@ -6,11 +6,14 @@ import { storage } from './modules/storage';
 // 游戏循环
 class GameLoop {
   private lastTime: number = 0;
+  private lastUIUpdateTime: number = 0;
   private running: boolean = false;
+  private uiUpdateInterval: number = 1000 / 30; // UI更新频率：30fps
 
   start(): void {
     this.running = true;
     this.lastTime = performance.now();
+    this.lastUIUpdateTime = performance.now();
     this.loop(this.lastTime);
   }
 
@@ -24,10 +27,17 @@ class GameLoop {
     const deltaTime = (timestamp - this.lastTime) / 1000; // 转换为秒
     this.lastTime = timestamp;
 
-    // 更新战斗
+    // 更新战斗（每一帧都更新计算逻辑）
     if (state.battle.active) {
       engine.updateBattle(deltaTime);
-      ui.updateBattleUI();
+    }
+
+    // 以固定频率更新UI（避免动画闪动）
+    if (timestamp - this.lastUIUpdateTime >= this.uiUpdateInterval) {
+      if (state.battle.active) {
+        ui.updateBattleUI();
+      }
+      this.lastUIUpdateTime = timestamp;
     }
 
     requestAnimationFrame((time) => this.loop(time));
@@ -52,6 +62,11 @@ function initGame(): void {
   setInterval(() => {
     storage.saveGame();
   }, 30000);
+
+  // 页面卸载时保存游戏进度
+  window.addEventListener('beforeunload', () => {
+    storage.saveGame();
+  });
 
   console.log('游戏初始化完成！');
 }

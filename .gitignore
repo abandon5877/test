@@ -7,10 +7,36 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node.js
 node_modules
 dist
 dist-ssr
 *.local
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+uv.lock
+
+# Playwright
+playwright-browsers/
+.ms-playwright/
 
 # Editor directories and files
 .vscode/*
@@ -40,3 +66,16 @@ coverage/
 
 # Backup directory
 .backup/
+
+# Design and documentation files
+.trae/documents/
+.trae/rules/
+.trae/spec/
+
+# Local documentation files
+本地开发调试说明.md
+GitHub-Pages部署指南.md
+
+# Exclude all md files except README.md
+*.md
+!README.md

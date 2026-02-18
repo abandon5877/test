@@ -8,73 +8,246 @@
   </head>
   <body>
     <div id="app">
-      <header class="status-bar">
-        <div class="scene-title">魔法编程冒险</div>
-        <div class="player-stats">
-          <div class="stat">
-            <span class="label">HP</span>
-            <div class="gauge">
-              <div class="gauge-fill hp"></div>
-            </div>
-            <span class="value">100/100</span>
-          </div>
-          <div class="stat">
-            <span class="label">MP</span>
-            <div class="gauge">
-              <div class="gauge-fill mp"></div>
-            </div>
-            <span class="value">50/50</span>
-          </div>
-        </div>
-      </header>
-      
       <main class="scene-content">
+        <!-- 营地场景 -->
         <div id="camp-scene" class="scene active">
-          <h2>营地</h2>
-          <div class="rune-library">
-            <h3>符文库</h3>
-            <div class="rune-grid" id="rune-library-grid"></div>
-          </div>
-          <div class="spell-slots">
-            <h3>法术卡槽</h3>
-            <div class="slot-grid" id="spell-slots-grid"></div>
-          </div>
-          <div class="preview">
-            <h3>预览</h3>
-            <div class="preview-content" id="spell-preview"></div>
-          </div>
-          <div class="controls">
-            <button id="start-battle-btn">开始战斗</button>
+          <!-- 开发模式容器 -->
+          <div class="dev-mode-container" id="dev-mode-container"></div>
+          
+
+          
+          <!-- 主内容区域 -->
+          <div class="main-content">
+            <!-- 左侧立绘区域 -->
+            <div class="character-container">
+              <div class="character-illustration">
+                <div class="illustration-placeholder">
+                  <img src="/src/assets/images/0.png" alt="魔法师" class="character-image">
+                </div>
+              </div>
+              <div class="character-name">魔法师</div>
+            </div>
+            
+            <!-- 右侧内容区域 -->
+            <div class="content-area">
+              <!-- 标签页导航 -->
+              <div class="tab-navigation">
+                <button class="tab-button" data-tab="stats">属性</button>
+                <button class="tab-button active" data-tab="magic">魔法台</button>
+                <button class="tab-button" data-tab="shop">商店</button>
+                <button class="tab-button" data-tab="backpack">背包</button>
+                <button class="tab-button" data-tab="adventure">冒险</button>
+              </div>
+              
+              <!-- 属性标签页 -->
+              <div class="tab-content" data-tab="stats">
+                <div class="stats-content">
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-label">生命值</span>
+                      <span class="stat-value">100/100</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">魔法值</span>
+                      <span class="stat-value">50/50</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">攻击力</span>
+                      <span class="stat-value">10</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">速度</span>
+                      <span class="stat-value">12</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">施法速度</span>
+                      <span class="stat-value">10</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">专注值</span>
+                      <span class="stat-value">20</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">经验值</span>
+                      <span class="stat-value" id="player-experience">0</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">等级</span>
+                      <span class="stat-value" id="player-level-display">1</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 背包标签页 -->
+              <div class="tab-content" data-tab="backpack">
+                <div class="backpack-content">
+                  <h3>背包</h3>
+                  <div class="resource-items">
+                    <div class="stat-item">
+                      <span class="stat-label">金币:</span>
+                      <span class="stat-value" id="player-gold">0</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">素材:</span>
+                      <span class="stat-value" id="player-materials">0</span>
+                    </div>
+                  </div>
+                  <div class="material-inventory" id="backpack-material-inventory"></div>
+                </div>
+              </div>
+              
+              <!-- 魔法台标签页 -->
+              <div class="tab-content active" data-tab="magic">
+                <!-- 第一级：法术槽位展示 -->
+                <div class="magic-level-1 active">
+                  <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1rem;">
+                    <h3>法术槽位</h3>
+                    <span class="level-1-info" style="font-size: 0.9rem; color: var(--text-dim); margin: 0;">点击法术槽位进入编辑模式</span>
+                  </div>
+                  <div class="spell-slots-grid" id="spell-slots-grid"></div>
+                </div>
+                
+                <!-- 第二级：符文编辑模式 -->
+                <div class="magic-level-2">
+                  <div class="level-2-header">
+                    <h3>编辑法术</h3>
+                    <button class="back-to-level-1">返回</button>
+                  </div>
+                  <div class="level-2-content">
+                    <div class="current-slot">
+                      <h4>当前编辑槽位</h4>
+                      <div class="slot-preview" id="current-slot-preview"></div>
+                    </div>
+                    <div class="rune-editor">
+                      <div class="rune-tabs">
+                        <button class="rune-tab active" data-rune-type="all">全部</button>
+                        <button class="rune-tab" data-rune-type="elemental">元素</button>
+                        <button class="rune-tab" data-rune-type="arcane">奥术</button>
+                        <button class="rune-tab" data-rune-type="support">辅助</button>
+                      </div>
+                      <div class="rune-grid" id="rune-library-grid"></div>
+                    </div>
+                    <div class="spell-preview">
+                      <h4>法术预览</h4>
+                      <div class="preview-content" id="spell-preview"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 商店标签页 -->
+              <div class="tab-content" data-tab="shop">
+                <div class="shop-content">
+                  <div class="shop" id="shop">
+                    <div class="shop-section">
+                      <h4>素材库存</h4>
+                      <div class="material-inventory" id="material-inventory"></div>
+                    </div>
+                    <div class="shop-section">
+                      <h4>可购买素材</h4>
+                      <div class="shop-items" id="shop-items"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 冒险标签页 -->
+              <div class="tab-content" data-tab="adventure">
+                <div class="adventure-content">
+                  <h3>冒险</h3>
+                  <div class="adventure-controls">
+                    <button id="start-battle-btn">开始战斗</button>
+                    <button id="rest-btn">休息</button>
+                    <button id="camp-restart-btn">重开游戏</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
+        <!-- 战斗场景 -->
         <div id="battle-scene" class="scene">
-          <h2>战斗</h2>
-          <div class="battle-arena">
-            <div class="enemy-info" id="enemy-info"></div>
-            <div class="battle-status">
-              <div class="atb-bar player">
-                <div class="atb-fill" id="player-atb"></div>
-                <span>玩家</span>
-              </div>
-              <div class="atb-bar enemy">
-                <div class="atb-fill" id="enemy-atb"></div>
-                <span>敌人</span>
+          <div class="scene-layout">
+            <!-- 左侧主角立绘 -->
+            <div class="character-panel">
+              <div class="character-avatar">🧙‍♂️</div>
+              <div class="character-info">
+                <h3>魔法师</h3>
+                <div class="combat-stats">
+                  <div class="stat">
+                    <span class="label">HP</span>
+                    <div class="gauge small">
+                      <div class="gauge-fill hp"></div>
+                      <div class="gauge-fill focus"></div>
+                    </div>
+                    <span class="value">100/100</span>
+                  </div>
+                  <div class="stat">
+                    <span class="label">MP</span>
+                    <div class="gauge small">
+                      <div class="gauge-fill mp"></div>
+                    </div>
+                    <span class="value">50/50</span>
+                  </div>
+                  <div class="stat secondary">
+                    <span class="label">速度</span>
+                    <span class="value">12</span>
+                  </div>
+                  <div class="stat secondary">
+                    <span class="label">施法速度</span>
+                    <span class="value">10</span>
+                  </div>
+                  <div class="stat secondary">
+                    <span class="label">专注值</span>
+                    <span class="value">20</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="cast-bar" id="cast-bar">
-              <div class="cast-fill" id="cast-progress"></div>
-              <span>吟唱中...</span>
+            
+            <!-- 右侧内容区域 -->
+            <div class="content-panel">
+              <div class="battle-arena">
+                  <div class="battle-layout">
+                    <!-- 最左侧ATB区域（贴边） -->
+                    <div class="atb-section">
+                      <div class="atb-container">
+                        <div class="atb-group">
+                          <div class="atb-vertical player">
+                            <div class="atb-fill vertical" id="player-atb"></div>
+                            <div class="atb-fill vertical preview" id="player-atb-preview"></div>
+                            <span>玩家</span>
+                          </div>
+                          <div class="atb-vertical enemy">
+                            <div class="atb-fill vertical" id="enemy-atb"></div>
+                            <div class="atb-fill vertical preview" id="enemy-atb-preview"></div>
+                            <span>敌人</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- ATB右侧的怪物属性区域（居中） -->
+                    <div class="enemy-section">
+                      <div class="enemy-info" id="enemy-info"></div>
+                    </div>
+                  </div>
+                  
+                  <!-- 法术和撤退按钮区域 -->
+                  <div class="battle-controls">
+                    <div class="player-spells" id="player-spells"></div>
+                    <button class="retreat-button" id="retreat-button">撤退</button>
+                  </div>
+                </div>
+              <div class="battle-log" id="battle-log"></div>
             </div>
-            <div class="player-spells" id="player-spells"></div>
           </div>
-          <div class="battle-log" id="battle-log"></div>
         </div>
       </main>
       
-      <footer class="controls">
-        <button id="back-to-camp-btn" style="display: none;">返回营地</button>
-      </footer>
+
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

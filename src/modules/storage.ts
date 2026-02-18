@@ -16,6 +16,12 @@ export const storage = {
       timestamp: Date.now()
     };
 
+    // 如果在战斗中，保存战斗状态和敌人信息
+    if (state.scene === 'battle' && state.enemy) {
+      saveData.enemy = { ...state.enemy };
+      saveData.battle = { ...state.battle };
+    }
+
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
       console.log('游戏进度已保存');
@@ -43,6 +49,16 @@ export const storage = {
       // 恢复场景
       if (parsedData.lastScene) {
         state.scene = parsedData.lastScene;
+      }
+
+      // 恢复战斗状态（如果在战斗中）
+      if (parsedData.lastScene === 'battle') {
+        if (parsedData.enemy) {
+          state.enemy = { ...parsedData.enemy };
+        }
+        if (parsedData.battle) {
+          state.battle = { ...parsedData.battle };
+        }
       }
 
       console.log('游戏进度已加载');
