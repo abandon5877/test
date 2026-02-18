@@ -93,6 +93,76 @@ export class Fullscreen {
 }
 
 /**
+ * 创建全屏按钮
+ * 添加一个可见的全屏按钮到游戏界面
+ */
+export function createFullscreenButton(): void {
+  console.log('创建全屏按钮...');
+  
+  // 检查是否已存在全屏按钮
+  if (document.getElementById('fullscreen-button')) {
+    console.log('全屏按钮已存在');
+    return;
+  }
+  
+  // 创建全屏按钮
+  const button = document.createElement('button');
+  button.id = 'fullscreen-button';
+  button.className = 'fullscreen-button';
+  button.innerHTML = '🔲 全屏';
+  
+  // 添加样式
+  button.style.position = 'fixed';
+  button.style.top = '10px';
+  button.style.right = '10px';
+  button.style.zIndex = '9999';
+  button.style.padding = '8px 16px';
+  button.style.backgroundColor = '#6b46c1';
+  button.style.color = 'white';
+  button.style.border = 'none';
+  button.style.borderRadius = '4px';
+  button.style.fontSize = '14px';
+  button.style.cursor = 'pointer';
+  button.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+  button.style.transition = 'background-color 0.3s';
+  
+  // 添加悬停效果
+  button.addEventListener('mouseenter', () => {
+    button.style.backgroundColor = '#553c9a';
+  });
+  
+  button.addEventListener('mouseleave', () => {
+    button.style.backgroundColor = '#6b46c1';
+  });
+  
+  // 添加点击事件
+  button.addEventListener('click', async () => {
+    console.log('用户点击全屏按钮');
+    
+    try {
+      await Fullscreen.toggle();
+      
+      // 更新按钮文本
+      if (Fullscreen.isFullscreen()) {
+        button.innerHTML = '🔲 退出全屏';
+        console.log('成功进入全屏模式');
+      } else {
+        button.innerHTML = '🔲 全屏';
+        console.log('成功退出全屏模式');
+      }
+    } catch (error) {
+      console.error('全屏操作失败:', error);
+      // 显示错误提示
+      alert('全屏操作失败: ' + (error as Error).message);
+    }
+  });
+  
+  // 添加到页面
+  document.body.appendChild(button);
+  console.log('全屏按钮创建完成');
+}
+
+/**
  * 初始化全屏处理
  * 添加用户交互事件监听器，在用户首次交互时尝试进入全屏
  */
@@ -104,6 +174,9 @@ export function initFullscreenHandler(): void {
     console.log('当前浏览器不支持全屏API');
     return;
   }
+
+  // 创建全屏按钮
+  createFullscreenButton();
 
   // 标记是否已经尝试过全屏
   let hasTriedFullscreen = false;
@@ -120,6 +193,11 @@ export function initFullscreenHandler(): void {
       Fullscreen.enter()
         .then(() => {
           console.log('成功进入全屏模式');
+          // 更新全屏按钮状态
+          const button = document.getElementById('fullscreen-button');
+          if (button) {
+            button.innerHTML = '🔲 退出全屏';
+          }
         })
         .catch((error) => {
           console.log('进入全屏失败:', error.message);
@@ -138,7 +216,26 @@ export function initFullscreenHandler(): void {
     document.addEventListener(event, tryFullscreen, { once: true });
   });
 
+  // 添加全屏状态变化监听器
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+  document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
   console.log('全屏处理器初始化完成，等待用户交互...');
+}
+
+/**
+ * 处理全屏状态变化
+ */
+function handleFullscreenChange() {
+  console.log('全屏状态变化:', Fullscreen.isFullscreen() ? '进入全屏' : '退出全屏');
+  
+  // 更新全屏按钮状态
+  const button = document.getElementById('fullscreen-button');
+  if (button) {
+    button.innerHTML = Fullscreen.isFullscreen() ? '🔲 退出全屏' : '🔲 全屏';
+  }
 }
 
 export default Fullscreen;
