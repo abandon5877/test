@@ -1,4 +1,5 @@
 // src/utils/orientation.ts
+import { Fullscreen } from './fullscreen';
 
 /**
  * 屏幕方向工具类
@@ -128,6 +129,32 @@ export function hideLandscapePrompt(): void {
   const fullscreenButton = document.getElementById('fullscreen-button');
   if (fullscreenButton) {
     fullscreenButton.style.display = 'block';
+  }
+  
+  // 自动尝试进入全屏
+  tryEnterFullscreen();
+}
+
+/**
+ * 尝试进入全屏模式
+ */
+function tryEnterFullscreen(): void {
+  console.log('尝试进入全屏模式...');
+  
+  if (Fullscreen.isSupported() && !Fullscreen.isFullscreen()) {
+    Fullscreen.enter()
+      .then(() => {
+        console.log('成功进入全屏模式');
+        // 进入全屏后隐藏按钮
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        if (fullscreenButton) {
+          fullscreenButton.style.display = 'none';
+        }
+      })
+      .catch((error) => {
+        console.log('进入全屏失败:', error.message);
+        // 失败时不阻止后续操作
+      });
   }
 }
 
