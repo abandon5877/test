@@ -3,6 +3,7 @@ import { state, engine } from './modules/engine';
 import { ui } from './modules/ui';
 import { storage } from './modules/storage';
 import { initFullscreenHandler } from './utils/fullscreen';
+import { initOrientationDetection } from './utils/orientation';
 
 // 游戏循环
 class GameLoop {
@@ -54,6 +55,9 @@ function initGame(): void {
 
   // 初始化全屏处理器
   initFullscreenHandler();
+
+  // 初始化屏幕方向检测
+  initOrientationDetection();
 
   // 加载游戏进度
   storage.loadGame();
